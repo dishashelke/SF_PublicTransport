@@ -1,0 +1,101 @@
+<!--
+
+routes.html
+
+Retrives the information about the routes for a particular agency
+
+author : Disha Shelke 
+Email  : shelke.disha@gmail.com
+
+-->
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <script>
+
+        // an XMLHttpRequest
+        var xhr = null;
+
+        /*
+         * void
+         * quote()
+         *
+         * Gets a quote.
+         */
+        function routes()
+        {
+            // instantiate XMLHttpRequest object
+            try
+            {
+                xhr = new XMLHttpRequest();
+            }
+            catch (e)
+            {
+                xhr = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+
+            // handle old browsers
+            if (xhr == null)
+            {
+                alert("Ajax not supported by your browser!");
+                return;
+            }
+
+            // construct URL
+            //var url = "agency.php?token=" + document.getElementById("token").value;
+            var url = "routes.php?token=" + document.getElementById("token").value + "&agency=" + document.getElementById("agency").value;
+
+            // get quote
+            xhr.onreadystatechange = handler;
+            xhr.open("GET", url, true);
+            xhr.send(null);
+        }
+
+
+        /*
+         * void
+         * handler()
+         *
+         * Handles the Ajax response.
+         */
+        function handler()
+        {
+            // only handle loaded requests
+            if (xhr.readyState == 4)
+            {
+                if (xhr.status == 200) 
+                {
+					document.getElementById("routelist").innerHTML = "";
+                    var json = JSON.parse(xhr.responseText);
+					var routes = json["AgencyList"]["Agency"]["RouteList"]["Route"];
+					
+					for(i=0;i<routes.length;i++) {
+						var div = document.createElement("div");
+						var text = document.createTextNode("Route (" + (i+1) + ") : " + routes[i]["@attributes"]["Name"]);
+						div.appendChild(text);
+						document.getElementById("routelist").appendChild(div);
+					}
+				}
+                else
+                    alert("Error with Ajax call!");
+            }
+        }
+
+    </script>
+    <title></title>
+  </head>
+  <body>
+    <form onsubmit="routes(); return false;">      
+		Token : <input id="token" type="text">
+		<br>
+		Agency Name : <input id="agency" type="text">
+		<br>
+		<input type="submit" value="Get Routes">
+		<br>
+		Routes :
+		<div id="routelist"> Routes will appear here!</div>
+    </form>
+  </body>
+</html>

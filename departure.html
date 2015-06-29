@@ -1,0 +1,145 @@
+
+<!--
+
+departure.html
+
+Retrives the departure time for particular details submitted to the form
+
+author : Disha Shelke 
+Email  : shelke.disha@gmail.com
+
+-->
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <script>
+
+        // an XMLHttpRequest
+        var xhr = null;
+
+        /*
+         * void
+         * quote()
+         *
+         * Gets a quote.
+         */
+        function departure()
+        {
+            // instantiate XMLHttpRequest object
+            try
+            {
+                xhr = new XMLHttpRequest();
+            }
+            catch (e)
+            {
+                xhr = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+
+            // handle old browsers
+            if (xhr == null)
+            {
+                alert("Ajax not supported by your browser!");
+                return;
+            }
+
+            // construct URL
+            var url = "departure.php?token=" + document.getElementById("token").value + "&agency=" + document.getElementById("agency").value + "&stopname=" + document.getElementById("stopname").value;
+			
+            // get departure time
+            // issue the ajax call
+            xhr.onreadystatechange = handler;
+            xhr.open("GET", url, true);
+            xhr.send(null);
+        }
+
+        /*
+         * void
+         * handler()
+         *
+         * Handles the Ajax response.
+         */
+        function handler()
+        {
+            // only handle loaded requests
+            if (xhr.readyState == 4)
+            {
+                if (xhr.status == 200) 
+                {
+					document.getElementById("departure").innerHTML = "";
+                    var json = JSON.parse(xhr.responseText);
+                    try {
+						if(json["AgencyList"]["Info"].indexOf("No Predictions Available")>-1) {
+							document.getElementById("departure").innerHTML = "No Predictions Available";
+							return;
+						}
+					} catch(e) {
+					}
+					
+					var departures = json["AgencyList"]["Agency"]["RouteList"]["Route"];
+					var hasDirections = json["AgencyList"]["Agency"]["@attributes"]["HasDirection"]
+					
+					var div = document.createElement("div");
+					var text = document.createTextNode("Departure Time from Stop : " + document.getElementById("stopname").value);
+					div.appendChild(text);
+					document.getElementById("departure").appendChild(div);
+					
+					for(i=0;i<departures.length;i++) {
+						var div = document.createElement("div");
+						var text = null;
+						if(hasDirections == "True") {
+							if(departures[i]["RouteDirectionList"]["RouteDirection"]["StopList"] == null) {
+								if(departures[i]["RouteDirectionList"]["RouteDirection"][0]["StopList"]["Stop"]["DepartureTimeList"]["DepartureTime"] != null)
+									text = document.createTextNode("Route Name : " + departures[i]["@attributes"]["Name"] + "Direction : Outbound Departure Time : " + departures[i]["RouteDirectionList"]["RouteDirection"][0]["StopList"]["Stop"]["DepartureTimeList"]["DepartureTime"]);
+								else
+									text = document.createTextNode("Route Name : " + departures[i]["@attributes"]["Name"] + "Direction : Outbound Departure Time : No Predections available");
+								
+								if(text!=null)
+									div.appendChild(text);
+								var br = document.createElement("br");
+								div.appendChild(br);
+								text = null;
+								if(departures[i]["RouteDirectionList"]["RouteDirection"][1]["StopList"]["Stop"]["DepartureTimeList"]["DepartureTime"] != null)
+									text = document.createTextNode("Route Name : " + departures[i]["@attributes"]["Name"] + "Direction : Inbound Departure Time : " + departures[i]["RouteDirectionList"]["RouteDirection"][1]["StopList"]["Stop"]["DepartureTimeList"]["DepartureTime"]);
+								else
+									text = document.createTextNode("Route Name : " + departures[i]["@attributes"]["Name"] + "Direction : Inbound Departure Time : No Predections available");
+							} else {
+								if(departures[i]["RouteDirectionList"]["RouteDirection"]["StopList"]["Stop"]["DepartureTimeList"]["DepartureTime"] == null)
+									text = document.createTextNode("Route Name : " + departures[i]["@attributes"]["Name"] + " Departure Time : No predections available");
+								else
+									text = document.createTextNode("Route Name : " + departures[i]["@attributes"]["Name"] + " Departure Time : " + departures[i]["RouteDirectionList"]["RouteDirection"]["StopList"]["Stop"]["DepartureTimeList"]["DepartureTime"]);
+							}
+						} else {
+							if(departures[i]["StopList"]["Stop"]["DepartureTimeList"]["DepartureTime"] == null)
+								text = document.createTextNode("Route Name : " + departures[i]["@attributes"]["Name"] + " Departure Time : No predections available");
+							else
+								text = document.createTextNode("Route Name : " + departures[i]["@attributes"]["Name"] + " Departure Time : " + departures[i]["StopList"]["Stop"]["DepartureTimeList"]["DepartureTime"]);
+						}
+						if(text!=null) {			
+							div.appendChild(text);
+							document.getElementById("departure").appendChild(div);
+						}
+					}
+				}
+                else
+                    alert("Error with Ajax call!");
+            }
+        }
+
+    </script>
+    <title></title>
+  </head>
+  <body>
+    <form onsubmit="departure(); return false;">
+			Token : <input id="token" type="text">
+			<br>
+			Agency : <input id="agency" type="text">
+			<br>
+			Stop Name : <input id="stopname" type="text">
+			<br>
+			<input type="submit" value="Get stops">
+			<div id="departure"> <b> Departure time would appear here shortly! </b> </div>
+	</form>
+  </body>
+</html>
